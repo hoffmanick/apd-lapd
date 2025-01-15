@@ -320,7 +320,15 @@ Below are tables of the total number of missing values for each field from the a
 
 ```{r total-misses,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
 
-missing_colls =alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+missing_colls =alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+
+collcount =alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% count()
+
+
+
+datatable(collcount,rownames=FALSE)
+
 
 datatable(missing_colls, rownames=FALSE)
 
@@ -330,7 +338,12 @@ datatable(missing_colls, rownames=FALSE)
 
 ``` {r sitemis,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
 
-missing_sites =alapd_sites %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename.y,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+missing_sites =alapd_sites %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename.y,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+sitecount = alapd_sites %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename.y,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
+
+datatable(sitecount,rownames=FALSE)
+
 
 datatable(missing_sites, rownames=FALSE)
 
@@ -339,7 +352,12 @@ datatable(missing_sites, rownames=FALSE)
 ## Datasets
 
 ```{r datemis,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
-missing_datasets =alapd_datasets %>%  left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+missing_datasets =alapd_datasets %>%  left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+datasetcount = alapd_datasets %>%  left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
+
+
+datatable(datasetcount,rownames=FALSE)
 
 datatable(missing_datasets, rownames=FALSE)
 
@@ -349,7 +367,11 @@ datatable(missing_datasets, rownames=FALSE)
 
 ```{r samplmiss,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
 
-missing_samples =alapd_samples %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+missing_samples =alapd_samples %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+samplecount = alapd_samples %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
+
+datatable(samplecount,rownames=FALSE)
 
 datatable(missing_samples, rownames=FALSE)
 
@@ -362,6 +384,10 @@ datatable(missing_samples, rownames=FALSE)
 
 missing_analysisunits =alapd_analysisunits %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(handle,siteid,colltypeid,depenvtid,collunitname,colldate,colldevice,gpslatitude,gpslongitude,gpsaltitude,gpserror,waterdepth,substrateid,slopeaspect,slopeangle,location,notes.y,recdatecreated,recdatemodified,lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
 
+analycount = alapd_analysisunits %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(handle,siteid,colltypeid,depenvtid,collunitname,colldate,colldevice,gpslatitude,gpslongitude,gpsaltitude,gpserror,waterdepth,substrateid,slopeaspect,slopeangle,location,notes.y,recdatecreated,recdatemodified,lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% count()
+
+datatable(analycount,rownames=FALSE)
+
 datatable(missing_analysisunits, rownames=FALSE)
 
 ```
@@ -370,7 +396,13 @@ datatable(missing_analysisunits, rownames=FALSE)
 
 ```{r pubmiss,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
 
-missing_publications =alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(datasetid,primarypub,datecreated.y,datemodified.y,lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+missing_publications =alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(datasetid,primarypub,datecreated.y,datemodified.y,lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+
+pubcount = alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(datasetid,primarypub,datecreated.y,datemodified.y,lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
+
+datatable(pubcount,rownames=FALSE)
+
 
 datatable(missing_publications, rownames=FALSE)
 ```
@@ -449,7 +481,7 @@ ggplot(missing_analysisunit_t) +
 ## Publications
 
 ```{r pubtimemiss,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
-missing_publications_t = alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(datasetid,primarypub,datecreated.y,datemodified.y,lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% mutate(date = as.Date(datecreated.x)) %>%  mutate(year_month = floor_date(date, unit = "month")) %>% group_by(db,year_month) %>% summarize_all(~ sum(is.na(.))) %>% mutate_if(is.numeric, cumsum) %>% pivot_longer(cols=c(3:28),names_to = "parameter",values_to = "num_missing")
+missing_publications_t = alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(datasetid,primarypub,datecreated.y,datemodified.y,lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% mutate(date = as.Date(datecreated.x)) %>%  mutate(year_month = floor_date(date, unit = "month")) %>% group_by(db,year_month) %>% summarize_all(~ sum(is.na(.))) %>% mutate_if(is.numeric, cumsum) %>% pivot_longer(cols=c(3:28),names_to = "parameter",values_to = "num_missing")
 
 ggplot(missing_publications_t) + 
   geom_line(mapping=aes(x=year_month,y=num_missing,col=db)) + 
