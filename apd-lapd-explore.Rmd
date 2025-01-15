@@ -1,25 +1,84 @@
 ---
 title: "apd lapd exploration"
 author: "Nick Hoffman"
-date: '2024-08-29'
-output: html_document
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    highlight: pygment
+    keep_md: no
+    toc: true
+    number_sections: true
+    toc_depth: 1
+    toc_float: true
+    theme: journal
+editor_options:
+    chunk_output_type: inline
 ---
+
+<style type="text/css">
+h2, h3, h4, h5, h6 {
+  counter-reset: section;
+}
+p {
+  font-size:18px;
+}
+
+ul {
+  font-size:18px;
+}
+
+li {
+  font-size:18px;
+}
+table {
+   padding: 0;border-collapse: collapse;
+   layout: fixed;
+   width: 90%; }
+table tr {
+   border-top: 1px solid #cccccc;
+   background-color: white;
+   margin: 0;
+   padding: 0; }
+table tr:nth-child(2n) {
+   background-color: #f8f8f8; }
+table tr th {
+   font-weight: bold;
+   border: 1px solid #cccccc;
+   margin: 0;
+   padding: 6px 13px; }
+table tr td {
+   border: 1px solid #cccccc;
+   margin: 0;
+   padding: 6px 13px; }
+table tr th :first-child, table tr td :first-child {
+   margin-top: 0; }
+table tr th :last-child, table tr td :last-child {
+   margin-bottom: 0; }
+.html-widget {
+    margin: auto;
+}
+</style>
+
+---
+
+```{r, results='asis', echo = F}
+toc_depth <- rmarkdown::metadata$output$html_document$toc_depth
+sel <- paste0("h",(toc_depth+1):10, collapse = " > span, ")
+cat(paste0("<style>",
+           sel, 
+           " > .header-section-number { display: none; } </style>"))
+```
 
 ```{r setup,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(neotoma2)
 library(DT)
-library(sf)
 library(tidyverse)
 library(httr)
-library(jsonlite)
-library(tmap)
-library(osmdata)
-library(rosm)
-library(geojsonsf)
-library(stringr)
-sf_use_s2(FALSE)
+library(ggplot2)
+library(lubridate)
 ```
 
 
@@ -57,8 +116,13 @@ for (i in c(2,5)) {
 
 ```
 
+# Data Tables
 
-```{r pressure, echo=FALSE}
+Below are the data tables for the LAPD and APD.
+
+## Collection Units
+
+```{r pressure,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
 collunits = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/collectionunits?count=false&limit=99999"))$data
 
 
@@ -82,43 +146,355 @@ alapd_colls = collunits_df %>% dplyr::filter(siteid %in% db_sets$siteid)
 datatable(alapd_colls,rownames=FALSE)
 ```
 
-```{r new}
 
-repospec = content(GET("https://api.neotomadb.org/v2.0/data/dbtables?table=repositoryspecimens&count=false&limit=99999&offset=0"))$data
-repospec_mat = matrix(nrow=length(repospec),ncol=length(repospec[[1]]))
+## Sites
 
-for (i in seq(length(repospec))) {
-  for (j in seq(length(repospec[[1]]))) {
-    if(!is.null(repospec[[i]][[j]])) {
-      repospec_mat[i,j] = repospec[[i]][[j]] 
-    }
-  }
-}
-
-repospec_df=as.data.frame(repospec_mat)
-
-names(repospec_df) = c("datasetid","repositoryid","notes","recdatecreated","recdatemodified")
+```{r site,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+sites = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/sites?count=false&limit=99999"))$data
 
 
-repos = content(GET("https://api.neotomadb.org/v2.0/data/dbtables?table=repositoryinstitutions&count=false&limit=99999&offset=0"))$data
-repos_mat = matrix(nrow=length(repos),ncol=length(repos[[1]]))
 
-for (i in seq(length(repos))) {
-  for (j in seq(length(repos[[1]]))) {
-    if(!is.null(repos[[i]][[j]])) {
-      repos_mat[i,j] = repos[[i]][[j]] 
-    }
-  }
-}
+site_mat = matrix(nrow=length(sites),ncol=13)
 
-repos_df=as.data.frame(repos_mat)
+for (i in seq(length(sites))) {
+  for(j in seq(13) ) {
+    if (!is.null(sites[[i]][[j]])) {
+  site_mat[i,j] = sites[[i]][[j]]
+    }}}
 
-names(repos_df) = c("repositoryid","acronym","repostiory","notes","recdatecreated","recdatemodified")
+
+site_df = as.data.frame(site_mat)
+
+
+names(site_df) = c("siteid","sitename","longitudeeast","latitudenorth","longitudewest","latitudesouth","altitude","area","sitedescription","notes","datecreated","datemodified","geog")
+alapd_sites = site_df %>% dplyr::filter(siteid %in% db_sets$siteid)
+
+datatable(alapd_sites,rownames=FALSE)
+```
+
+
+## Datasets
+
+```{r dataste,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+datasets = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/datasets?count=false&limit=99999"))$data
+
+
+
+dataset_mat = matrix(nrow=length(datasets),ncol=8)
+
+for (i in seq(length(datasets))) {
+  for(j in seq(8) ) {
+    if (!is.null(datasets[[i]][[j]])) {
+  dataset_mat[i,j] = datasets[[i]][[j]]
+    }}}
+
+
+dataset_df = as.data.frame(dataset_mat)
+
+
+names(dataset_df) = c("datasetid","collectionunitid","datasettypeid","datasetname","notes","datecreated","datemodified","embargoid")
+alapd_datasets = dataset_df %>% dplyr::filter(datasetid %in% db_sets$datasetid)
+
+datatable(alapd_datasets,rownames=FALSE)
+```
+
+
+## Samples
+
+```{r samples,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+samples1 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/samples?count=false&limit=99999"))$data
+
+samplesb = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/samples?count=false&offset=99999&limit=100000"))$data
+samples2 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/samples?count=false&offset=199999&limit=99999"))$data
+samples3 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/samples?count=false&offset=299998&limit=99999"))$data
+samples4 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/samples?count=false&offset=399997&limit=99999"))$data
+samples5 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/samples?count=false&offset=499996&limit=99999"))$data
+
+samples = append(samples1,samplesb) %>% append(samples2) %>% append(samples3) %>% append(samples4) %>% append(samples5) 
+
+sample_mat = matrix(nrow=length(samples),ncol=12)
+
+for (i in seq(length(samples))) {
+  for(j in seq(12) ) {
+    if (!is.null(samples[[i]][[j]])) {
+  sample_mat[i,j] = samples[[i]][[j]]
+    }}}
+
+
+sample_df = as.data.frame(sample_mat)
+
+
+names(sample_df) = c("sampleid","analysisunitid","datasetid","samplename","analysisdate","labnumber","preparationmethod","sample_notes","datecreated","datemodified","sampledate","taxonid")
+alapd_samples = sample_df %>% dplyr::filter(datasetid %in% db_sets$datasetid)
+
+datatable(alapd_samples,rownames=FALSE)
+```
+
+
+## Analysis Units
+
+```{r analysisunits,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+analysisunits1 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/analysisunits?count=false&limit=99999"))$data
+
+analysisunits2 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/analysisunits?count=false&limit=99999&offset=99999"))$data
+analysisunits3 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/analysisunits?count=false&limit=99999&offset=199998"))$data
+analysisunits4 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/analysisunits?count=false&limit=99999&offset=299997"))$data
+analysisunits5 = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/analysisunits?count=false&limit=99999&offset=399996"))$data
+
+
+analysisunits = append(analysisunits1,analysisunits2) %>% append(analysisunits3) %>% append(analysisunits4) %>% append(analysisunits5)
+
+
+analysis_mat = matrix(nrow=length(analysisunits),ncol=11)
+
+for (i in seq(length(analysisunits))) {
+  for(j in seq(11) ) {
+    if (!is.null(analysisunits[[i]][[j]])) {
+  analysis_mat[i,j] = analysisunits[[i]][[j]]
+    }}}
+
+
+analysis_df = as.data.frame(analysis_mat)
+
+
+names(analysis_df) = c("analysisunitid","collectionunitid","analysisunitname","depth","thickness","faciesid","mixed","igsn","notes","datecreated","datemodified")
+
+analysis_join = analysis_df %>% dplyr::left_join(collunits_df,by=join_by("collectionunitid"))
+alapd_analysisunits = analysis_join %>% dplyr::filter(siteid %in% db_sets$siteid)
+
+datatable(alapd_analysisunits[1:11],rownames=FALSE)
+```
+
+
+## Publications
+
+```{r pubs,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+pubs = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/publications?count=false&limit=99999"))$data
+
+
+
+pub_mat = matrix(nrow=length(pubs),ncol=26)
+
+for (i in seq(length(pubs))) {
+  for(j in seq(26) ) {
+    if (!is.null(pubs[[i]][[j]])) {
+  pub_mat[i,j] = pubs[[i]][[j]]
+    }}}
+
+
+pub_df = as.data.frame(pub_mat)
+
+
+names(pub_df) = c("publicationid","pubtypeid","year","citation","articletitle","journal","volume","issue","pages","citationnumber","doi","booktitle","numvolumes","edition","volumetitle","seriestitle","seriesvolume","publisher","url","city","state","country","originallanguage","notes","datecreated","datemodified")
+
+
+datpubs = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/datasetpublications?count=false&limit=99999"))$data
+
+
+
+datpub_mat = matrix(nrow=length(datpubs),ncol=5)
+
+for (i in seq(length(datpubs))) {
+  for(j in seq(5) ) {
+    if (!is.null(datpubs[[i]][[j]])) {
+  datpub_mat[i,j] = datpubs[[i]][[j]]
+    }}}
+
+
+datpub_df = as.data.frame(datpub_mat)
+
+
+names(datpub_df) = c("datasetid","publicationid","primarypub","datecreated","datemodified")
+
+alapd_datpubs = pub_df %>% left_join(datpub_df, by=join_by("publicationid")) %>% dplyr::filter(datasetid %in% db_sets$datasetid)
+
+datatable(alapd_datpubs,rownames=FALSE)
+```
+
+# Total Misses
+
+Below are tables of the total number of missing values for each field from the above tables.
+
+## Collection Units
+
+
+```{r total-misses,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+missing_colls =alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+datatable(missing_colls, rownames=FALSE)
+
+```
+
+## Sites
+
+``` {r sitemis,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+missing_sites =alapd_sites %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename.y,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+datatable(missing_sites, rownames=FALSE)
+
+```
+
+## Datasets
+
+```{r datemis,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+missing_datasets =alapd_datasets %>%  left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+datatable(missing_datasets, rownames=FALSE)
+
+```
+
+## Samples
+
+```{r samplmiss,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+missing_samples =alapd_samples %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+datatable(missing_samples, rownames=FALSE)
+
+
+```
+
+## Analysis Units
+
+```{r analysmis,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+missing_analysisunits =alapd_analysisunits %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(handle,siteid,colltypeid,depenvtid,collunitname,colldate,colldevice,gpslatitude,gpslongitude,gpsaltitude,gpserror,waterdepth,substrateid,slopeaspect,slopeangle,location,notes.y,recdatecreated,recdatemodified,lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+datatable(missing_analysisunits, rownames=FALSE)
+
+```
+
+## Publications
+
+```{r pubmiss,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+missing_publications =alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(datasetid,primarypub,datecreated.y,datemodified.y,lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% summarize_all(~ sum(is.na(.)))
+
+datatable(missing_publications, rownames=FALSE)
+```
+
+# Misses Over Time
+
+Below are graphs of the cumulative sum of misses for each of the fields shown above, ordered by year-month.
+
+## Collection Units
+
+```{r change-in-time,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+
+missing_colls_t =alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% mutate(date = as.Date(recdatecreated)) %>%  mutate(year_month = floor_date(date, unit = "month")) %>% group_by(db,year_month) %>% summarize_all(~ sum(is.na(.))) %>% mutate_if(is.numeric, cumsum) %>% pivot_longer(cols=c(3:22),names_to = "parameter",values_to = "num_missing")
+
+ggplot(missing_colls_t) + 
+  geom_line(mapping=aes(x=year_month,y=num_missing,col=db)) + 
+  facet_wrap(~parameter) + theme_bw()
+
+```
+
+## Sites
+
+```{r timesitemis,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+
+
+missing_sites_t =alapd_sites %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename.y,datasetid,datasettype,dbID)) %>% distinct() %>% mutate(date = as.Date(datecreated)) %>%  mutate(year_month = floor_date(date, unit = "month")) %>% group_by(db,year_month) %>%  summarize_all(~ sum(is.na(.))) %>% mutate_if(is.numeric, cumsum) %>% pivot_longer(cols=c(3:15),names_to = "parameter",values_to = "num_missing")
+
+ggplot(missing_sites_t) + 
+  geom_line(mapping=aes(x=year_month,y=num_missing,col=db)) + 
+  facet_wrap(~parameter) + theme_bw()
+
+
+
+```
+
+## Datasets
+
+``` {r timedatmis,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+missing_datasets_t =alapd_datasets %>%  left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% mutate(date = as.Date(datecreated)) %>%  mutate(year_month = floor_date(date, unit = "month")) %>% group_by(db,year_month) %>%  summarize_all(~ sum(is.na(.))) %>% mutate_if(is.numeric, cumsum) %>% pivot_longer(cols=c(3:9),names_to = "parameter",values_to = "num_missing")
+
+ggplot(missing_datasets_t) + 
+  geom_line(mapping=aes(x=year_month,y=num_missing,col=db)) + 
+  facet_wrap(~parameter) + theme_bw()
+
+
+```
+
+## Samples
+
+``` {r timesamplemiss,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+missing_samples_t =alapd_samples %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% mutate(date = as.Date(datecreated)) %>%  mutate(year_month = floor_date(date, unit = "month")) %>% group_by(db,year_month) %>%  summarize_all(~ sum(is.na(.))) %>% mutate_if(is.numeric, cumsum) %>% pivot_longer(cols=c(3:13),names_to = "parameter",values_to = "num_missing")
+
+
+ggplot(missing_samples_t) + 
+  geom_line(mapping=aes(x=year_month,y=num_missing,col=db)) + 
+  facet_wrap(~parameter) + theme_bw()
+
+
+```
+
+## Analysis Units
+
+```{r analysistimemiss,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+missing_analysisunit_t = alapd_analysisunits %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(handle,siteid,colltypeid,depenvtid,collunitname,colldate,colldevice,gpslatitude,gpslongitude,gpsaltitude,gpserror,waterdepth,substrateid,slopeaspect,slopeangle,location,notes.y,recdatecreated,recdatemodified,lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% mutate(date = as.Date(datecreated)) %>%  mutate(year_month = floor_date(date, unit = "month")) %>% group_by(db,year_month) %>% summarize_all(~ sum(is.na(.))) %>% mutate_if(is.numeric, cumsum) %>% pivot_longer(cols=c(3:13),names_to = "parameter",values_to = "num_missing")
+
+ggplot(missing_analysisunit_t) + 
+  geom_line(mapping=aes(x=year_month,y=num_missing,col=db)) + 
+  facet_wrap(~parameter) + theme_bw()
+
+```
+
+## Publications
+
+```{r pubtimemiss,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+missing_publications_t = alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(datasetid,primarypub,datecreated.y,datemodified.y,lon,lat,sitename,datasetid,datasettype,dbID)) %>% group_by(db) %>% mutate(date = as.Date(datecreated.x)) %>%  mutate(year_month = floor_date(date, unit = "month")) %>% group_by(db,year_month) %>% summarize_all(~ sum(is.na(.))) %>% mutate_if(is.numeric, cumsum) %>% pivot_longer(cols=c(3:28),names_to = "parameter",values_to = "num_missing")
+
+ggplot(missing_publications_t) + 
+  geom_line(mapping=aes(x=year_month,y=num_missing,col=db)) + 
+  facet_wrap(~parameter) + theme_bw()
+
+```
+
+```{r new,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+#repospec = content(GET("https://api.neotomadb.org/v2.0/data/dbtables?table=repositoryspecimens&count=false&limit=99999&offset=0"))$data
+#repospec_mat = matrix(nrow=length(repospec),ncol=length(repospec[[1]]))
+
+#for (i in seq(length(repospec))) {
+#  for (j in seq(length(repospec[[1]]))) {
+#    if(!is.null(repospec[[i]][[j]])) {
+#      repospec_mat[i,j] = repospec[[i]][[j]] 
+#    }
+#  }
+#}
+
+#repospec_df=as.data.frame(repospec_mat)
+
+#names(repospec_df) = c("datasetid","repositoryid","notes","recdatecreated","recdatemodified")
+
+
+#repos = content(GET("https://api.neotomadb.org/v2.0/data/dbtables?table=repositoryinstitutions&count=false&limit=99999&offset=0"))$data
+#repos_mat = matrix(nrow=length(repos),ncol=length(repos[[1]]))
+
+#for (i in seq(length(repos))) {
+#  for (j in seq(length(repos[[1]]))) {
+#    if(!is.null(repos[[i]][[j]])) {
+#      repos_mat[i,j] = repos[[i]][[j]] 
+#    }
+#  }
+#}
+
+#repos_df=as.data.frame(repos_mat)
+
+#names(repos_df) = c("repositoryid","acronym","repostiory","notes","recdatecreated","recdatemodified")
 
 ## Montana State University
 
-repos_laapd = repospec_df %>% dplyr::filter(datasetid %in% db_sets$datasetid) 
+#repos_laapd = repospec_df %>% dplyr::filter(datasetid %in% db_sets$datasetid) 
 
-db_repos_laapd = db_sets %>% dplyr::filter(datasetid %in% repos_laapd$datasetid)
+#db_repos_laapd = db_sets %>% dplyr::filter(datasetid %in% repos_laapd$datasetid)
 
 ```
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
