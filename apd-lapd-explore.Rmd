@@ -1,0 +1,124 @@
+---
+title: "apd lapd exploration"
+author: "Nick Hoffman"
+date: '2024-08-29'
+output: html_document
+---
+
+```{r setup,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(neotoma2)
+library(DT)
+library(sf)
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(tmap)
+library(osmdata)
+library(rosm)
+library(geojsonsf)
+library(stringr)
+sf_use_s2(FALSE)
+```
+
+
+
+```{r cars,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
+
+db_sets = as.data.frame(matrix(nrow=0,ncol=7))
+names(db_sets) =c("lon","lat","siteid","sitename","datasetid","datasettype","dbID")
+for (i in c(2,5)) {
+ db = content(GET(paste0("https://api.neotomadb.org/v2.0/apps/constdb/datasets?dbid=",i)))$data
+    #print(paste("DB ID:",i))
+    db_mat = matrix(nrow=length(db),ncol=7)
+    for (m in seq(length(db))) {
+      if(!is.null(db[[m]]$coords[[1]])) {
+        db_mat[[m,1]] = db[[m]]$coords[[1]]}
+      if(!is.null(db[[m]]$coords[[2]])) {
+        db_mat[[m,2]] = db[[m]]$coords[[2]]}
+      if(!is.null(db[[m]]$siteid)) {
+        db_mat[[m,3]] = db[[m]]$siteid}
+      if(!is.null(db[[m]]$sitename)) {
+        db_mat[[m,4]] = db[[m]]$sitename}
+      if(!is.null(db[[m]]$datasetid)) {
+        db_mat[[m,5]] = db[[m]]$datasetid
+      }
+        if(!is.null(db[[m]]$datasettype)) {
+        db_mat[[m,6]] = db[[m]]$datasettype
+        }
+      db_mat[[m,7]] = i
+    }
+    db_df = as.data.frame(db_mat)
+    names(db_df) = c("lon","lat","siteid","sitename","datasetid","datasettype","dbID")
+    db_sets = rbind(db_sets,db_df)
+
+}
+
+```
+
+
+```{r pressure, echo=FALSE}
+collunits = content(GET("https://api.neotomadb.org/v2.0/data/dbtables/collectionunits?count=false&limit=99999"))$data
+
+
+collunits_mat = matrix(nrow=length(collunits),ncol=20)
+
+for (i in seq(length(collunits))) {
+  for(j in seq(20) ) {
+    if (!is.null(collunits[[i]][[j]])) {
+  collunits_mat[i,j] = collunits[[i]][[j]]
+    }}}
+
+
+collunits_df = as.data.frame(collunits_mat)
+
+
+names(collunits_df) = c("collectionunitid","handle","siteid","colltypeid","depenvtid","collunitname","colldate","colldevice","gpslatitude","gpslongitude","gpsaltitude","gpserror","waterdepth","substrateid","slopeaspect","slopeangle","location","notes","recdatecreated","recdatemodified")
+
+alapd_colls = collunits_df %>% dplyr::filter(siteid %in% db_sets$siteid)
+
+
+datatable(alapd_colls,rownames=FALSE)
+```
+
+```{r new}
+
+repospec = content(GET("https://api.neotomadb.org/v2.0/data/dbtables?table=repositoryspecimens&count=false&limit=99999&offset=0"))$data
+repospec_mat = matrix(nrow=length(repospec),ncol=length(repospec[[1]]))
+
+for (i in seq(length(repospec))) {
+  for (j in seq(length(repospec[[1]]))) {
+    if(!is.null(repospec[[i]][[j]])) {
+      repospec_mat[i,j] = repospec[[i]][[j]] 
+    }
+  }
+}
+
+repospec_df=as.data.frame(repospec_mat)
+
+names(repospec_df) = c("datasetid","repositoryid","notes","recdatecreated","recdatemodified")
+
+
+repos = content(GET("https://api.neotomadb.org/v2.0/data/dbtables?table=repositoryinstitutions&count=false&limit=99999&offset=0"))$data
+repos_mat = matrix(nrow=length(repos),ncol=length(repos[[1]]))
+
+for (i in seq(length(repos))) {
+  for (j in seq(length(repos[[1]]))) {
+    if(!is.null(repos[[i]][[j]])) {
+      repos_mat[i,j] = repos[[i]][[j]] 
+    }
+  }
+}
+
+repos_df=as.data.frame(repos_mat)
+
+names(repos_df) = c("repositoryid","acronym","repostiory","notes","recdatecreated","recdatemodified")
+
+## Montana State University
+
+repos_laapd = repospec_df %>% dplyr::filter(datasetid %in% db_sets$datasetid) 
+
+db_repos_laapd = db_sets %>% dplyr::filter(datasetid %in% repos_laapd$datasetid)
+
+```

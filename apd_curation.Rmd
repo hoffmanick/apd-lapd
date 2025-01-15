@@ -1,0 +1,87 @@
+---
+title: "African Pollen Database Metadata"
+author: "Nick Hoffman"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+
+
+library(neotoma2)
+library(DT)
+library(sf)
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(tmap)
+library(osmdata)
+library(rosm)
+library(geojsonsf)
+library(stringr)
+library(leaflet)
+sf_use_s2(FALSE)
+
+i=2
+db = content(GET("https://api.neotomadb.org/v2.0/apps/constdb/datasets?dbid=2"))$data
+  if (length(db) >0) {
+    #print(paste("DB ID:",i))
+    db_mat = matrix(nrow=length(db),ncol=7)
+    for (m in seq(length(db))) {
+      if(!is.null(db[[m]]$coords[[1]])) {
+        db_mat[[m,1]] = db[[m]]$coords[[1]]
+        db_mat[[m,2]] = db[[m]]$coords[[2]]
+        db_mat[[m,3]] = db[[m]]$siteid
+        db_mat[[m,4]] = db[[m]]$sitename
+        db_mat[[m,5]] = db[[m]]$datasettype[[1]]
+        db_mat[[m,6]] = i
+        db_mat[[m,7]] = db[[m]]$datasetid
+      }
+    }
+    db_df = as.data.frame(db_mat)
+    names(db_df) = c("lon","lat","siteid","sitename","datasettype","database","datasetid")
+    db_df = distinct(db_df) %>% st_as_sf(coords=c("lon","lat"),crs="NAD83")
+    }
+
+
+#####
+
+text="collectionunits"
+collunits = content(GET(paste0('https://api.neotomadb.org/v2.0/data/dbtables/',text,'?count=false&limit=99999&offset=0')))$data
+
+
+
+collunit_mat = matrix(nrow=length(collunits),ncol=20)
+
+for (i in seq(length(collunits))) {
+  for (j in seq(20)) {
+    if (!is.null(collunits[[i]][[j]])) {
+      collunit_mat[[i,j]] = collunits[[i]][[j]]
+    }
+  }
+}
+
+collunit_df = collunit_mat %>% as.data.frame()
+
+names(collunit_df) = c("collectionunitid","handle","siteid","colltypeid","depenvtid","collunitname","colldate","colldevice","gpslatitude","gpslongitude","gpsaltitude","gpserror","waterdepth","substrateid","slopeaspect","slopeangle","location","notes","recdaterecreated","recdatemodified")
+
+
+filtered_colls = collunit_df %>% dplyr::filter(siteid %in% db_df$siteid) 
+filteredColl_sf = collunit_df  %>% dplyr::filter(siteid %in% db_df$siteid)  %>% st_as_sf(coords=c("gpslongitude","gpslatitude"), crs="WGS84")
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
