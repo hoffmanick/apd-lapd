@@ -325,12 +325,13 @@ missing_colls =alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% mutate
 
 collcount =alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% count()
 
-
+missing_colls = as.data.frame(t(missing_colls))
+names(missing_colls) = c("african pollen db", "latin american pollen db")
 
 datatable(collcount,rownames=FALSE)
 
 
-datatable(missing_colls, rownames=FALSE)
+datatable(missing_colls)
 
 ```
 
@@ -342,10 +343,16 @@ missing_sites =alapd_sites %>% left_join(db_sets, by=join_by(siteid)) %>% mutate
 
 sitecount = alapd_sites %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename.y,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
 
+
+
+missing_sites = as.data.frame(t(missing_sites))
+names(missing_sites) = c("african pollen db", "latin american pollen db")
+
+
 datatable(sitecount,rownames=FALSE)
 
 
-datatable(missing_sites, rownames=FALSE)
+datatable(missing_sites)
 
 ```
 
@@ -357,9 +364,13 @@ missing_datasets =alapd_datasets %>%  left_join(db_sets, by=join_by(datasetid)) 
 datasetcount = alapd_datasets %>%  left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
 
 
+missing_datasets = as.data.frame(t(missing_datasets))
+names(missing_datasets) = c("african pollen db", "latin american pollen db")
+
+
 datatable(datasetcount,rownames=FALSE)
 
-datatable(missing_datasets, rownames=FALSE)
+datatable(missing_datasets)
 
 ```
 
@@ -371,9 +382,15 @@ missing_samples =alapd_samples %>% left_join(db_sets, by=join_by(datasetid)) %>%
 
 samplecount = alapd_samples %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
 
+
+missing_samples = as.data.frame(t(missing_samples))
+names(missing_samples) = c("african pollen db", "latin american pollen db")
+
+
+
 datatable(samplecount,rownames=FALSE)
 
-datatable(missing_samples, rownames=FALSE)
+datatable(missing_samples)
 
 
 ```
@@ -386,9 +403,15 @@ missing_analysisunits =alapd_analysisunits %>% left_join(db_sets, by=join_by(sit
 
 analycount = alapd_analysisunits %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(handle,siteid,colltypeid,depenvtid,collunitname,colldate,colldevice,gpslatitude,gpslongitude,gpsaltitude,gpserror,waterdepth,substrateid,slopeaspect,slopeangle,location,notes.y,recdatecreated,recdatemodified,lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% count()
 
+
+missing_analysisunits = as.data.frame(t(missing_analysisunits))
+names(missing_analysisunits) = c("african pollen db", "latin american pollen db")
+
+
+
 datatable(analycount,rownames=FALSE)
 
-datatable(missing_analysisunits, rownames=FALSE)
+datatable(missing_analysisunits)
 
 ```
 
@@ -401,10 +424,15 @@ missing_publications =alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)
 
 pubcount = alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(datasetid,primarypub,datecreated.y,datemodified.y,lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
 
+
+missing_publications = as.data.frame(t(missing_publications))
+names(missing_publications) = c("african pollen db", "latin american pollen db")
+
+
 datatable(pubcount,rownames=FALSE)
 
 
-datatable(missing_publications, rownames=FALSE)
+datatable(missing_publications)
 ```
 
 # Misses Over Time
