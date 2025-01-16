@@ -1,7 +1,7 @@
 <script type="module" src="https://cdn.jsdelivr.net/npm/bsky-embed/dist/bsky-embed.es.js" async></script>
 
 <bsky-embed
-    username="neotoma"
+    username="neotoma.bsky.social"
     mode="dark"
     limit="5"
     link-target="_blank"
