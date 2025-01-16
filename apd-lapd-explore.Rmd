@@ -325,7 +325,7 @@ missing_colls =alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% mutate
 
 collcount =alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% count()
 
-missing_colls = as.data.frame(t(missing_colls))
+missing_colls = as.data.frame(t(missing_colls)) %>% dplyr::filter(!V1 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% dplyr::filter(!V2 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% mutate(V1 = as.numeric(V1), V2= as.numeric(V2))
 names(missing_colls) = c("african pollen db", "latin american pollen db")
 
 datatable(collcount,rownames=FALSE)
@@ -345,7 +345,7 @@ sitecount = alapd_sites %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db
 
 
 
-missing_sites = as.data.frame(t(missing_sites))
+missing_sites = as.data.frame(t(missing_sites)) %>% dplyr::filter(!V1 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% dplyr::filter(!V2 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% mutate(V1 = as.numeric(V1), V2= as.numeric(V2))
 names(missing_sites) = c("african pollen db", "latin american pollen db")
 
 
@@ -364,7 +364,7 @@ missing_datasets =alapd_datasets %>%  left_join(db_sets, by=join_by(datasetid)) 
 datasetcount = alapd_datasets %>%  left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
 
 
-missing_datasets = as.data.frame(t(missing_datasets))
+missing_datasets = as.data.frame(t(missing_datasets)) %>% dplyr::filter(!V1 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% dplyr::filter(!V2 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% mutate(V1 = as.numeric(V1), V2= as.numeric(V2))
 names(missing_datasets) = c("african pollen db", "latin american pollen db")
 
 
@@ -383,7 +383,7 @@ missing_samples =alapd_samples %>% left_join(db_sets, by=join_by(datasetid)) %>%
 samplecount = alapd_samples %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
 
 
-missing_samples = as.data.frame(t(missing_samples))
+missing_samples = as.data.frame(t(missing_samples)) %>% dplyr::filter(!V1 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% dplyr::filter(!V2 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% mutate(V1 = as.numeric(V1), V2= as.numeric(V2))
 names(missing_samples) = c("african pollen db", "latin american pollen db")
 
 
@@ -404,7 +404,7 @@ missing_analysisunits =alapd_analysisunits %>% left_join(db_sets, by=join_by(sit
 analycount = alapd_analysisunits %>% left_join(db_sets, by=join_by(siteid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(handle,siteid,colltypeid,depenvtid,collunitname,colldate,colldevice,gpslatitude,gpslongitude,gpsaltitude,gpserror,waterdepth,substrateid,slopeaspect,slopeangle,location,notes.y,recdatecreated,recdatemodified,lon,lat,sitename,datasetid,datasettype,dbID)) %>% distinct() %>% group_by(db) %>% count()
 
 
-missing_analysisunits = as.data.frame(t(missing_analysisunits))
+missing_analysisunits = as.data.frame(t(missing_analysisunits)) %>% dplyr::filter(!V1 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% dplyr::filter(!V2 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% mutate(V1 = as.numeric(V1), V2= as.numeric(V2))
 names(missing_analysisunits) = c("african pollen db", "latin american pollen db")
 
 
@@ -425,7 +425,7 @@ missing_publications =alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)
 pubcount = alapd_datpubs %>% left_join(db_sets, by=join_by(datasetid)) %>% mutate(db = case_when(dbID == 2 ~ "African Pollen DB", dbID == 5 ~ "Latin American Pollen DB")) %>% select(!c(datasetid,primarypub,datecreated.y,datemodified.y,lon,lat,sitename,datasetid,datasettype,dbID)) %>%  distinct() %>% group_by(db) %>% count()
 
 
-missing_publications = as.data.frame(t(missing_publications))
+missing_publications = as.data.frame(t(missing_publications)) %>% dplyr::filter(!V1 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% dplyr::filter(!V2 %in% c("	African Pollen DB", "Latin American Pollen DB")) %>% mutate(V1 = as.numeric(V1), V2= as.numeric(V2))
 names(missing_publications) = c("african pollen db", "latin american pollen db")
 
 
