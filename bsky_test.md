@@ -7,7 +7,7 @@
     link-image="true"
     load-more="true"
     disable-styles="false"
-    custom-styles=".border-slate-300 { border-color: rgba(100, 10, 50, 0.5); } .section {background-color: rgba(100, 10, 50, 0.2); border: 1px solid rgba(100, 10, 50, 0.5); }"
+    custom-styles=".border-slate-300 { border-color: rgba(100, 10, 50, 0.5); } .max-w-screen-sm {background-color: rgba(100, 10, 50, 0.2); border: 1px solid rgba(100, 10, 50, 0.5); }"
     date-format='{"type":"relative"}'
   >
   </bsky-embed>
