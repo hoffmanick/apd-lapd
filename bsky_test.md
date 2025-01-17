@@ -2,13 +2,12 @@
 
 <bsky-embed
     username="neotomadb.bsky.social"
-    mode="dark"
     limit="5"
     link-target="_blank"
     link-image="true"
     load-more="true"
     disable-styles="false"
     custom-styles=".border-slate-300 { border-color: red; }"
-    date-format='{"type":"absolute","locale":"de-DE","options":{"weekday":"long","year":"numeric","month":"long","day":"numeric"}}'
+    date-format='{"type":"relative"}'
   >
   </bsky-embed>
