@@ -81,7 +81,145 @@ filteredColl_sf = collunit_df  %>% dplyr::filter(siteid %in% db_df$siteid)  %>% 
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
+garba_chrons = content(GET("https://api.neotomadb.org/v2.0/data/sites/28156/chronologies"))$data
+
+garba_mat = matrix(nrow =80, ncol = 31)
+
+idx = 0
+for (i in seq(length(garba_chrons))) {
+  for (j in seq(length(garba_chrons[[i]]$chronology$controls))) {
+  if (!is.null(garba_chrons[[i]]$chronology$agetype)) {
+    idx = idx + 1
+    garba_mat[[idx,1]] = garba_chrons[[i]]$chronology$agetype
+  }
+    if (!is.null(garba_chrons[[i]]$chronology$default)) {
+    garba_mat[[idx,2]] = garba_chrons[[i]]$chronology$default
+    }
+      if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$age)) {
+    garba_mat[[idx,3]] = garba_chrons[[i]]$chronology$controls[[j]]$age
+      }
+        if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$depth)) {
+    garba_mat[[idx,4]] = garba_chrons[[i]]$chronology$controls[[j]]$depth
+        }
+  
+        if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$notes)) {
+    garba_mat[[idx,5]] = garba_chrons[[i]]$chronology$controls[[j]]$notes
+        }
+       if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$agetype)) {
+    garba_mat[[idx,6]] = garba_chrons[[i]]$chronology$controls[[j]]$agetype
+       }
+           if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$thickness)) {
+    garba_mat[[idx,7]] = garba_chrons[[i]]$chronology$controls[[j]]$thickness
+           }
+    
+           if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$cpntroltype)) {
+    garba_mat[[idx,8]] = garba_chrons[[i]]$chronology$controls[[j]]$controltype
+           }
+    
+           if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$analysisunitid)) {
+    garba_mat[[idx,9]] = garba_chrons[[i]]$chronology$controls[[j]]$analysisunitid
+           }
+    
+           if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$chroncontrolid)) {
+    garba_mat[[idx,10]] = garba_chrons[[i]]$chronology$controls[[j]]$chroncontrolid
+           }
+           if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$analysisunitname)) {
+    garba_mat[[idx,11]] = garba_chrons[[i]]$chronology$controls[[j]]$analysisunitname
+           }
+    
+               if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$notes)) {
+    garba_mat[[idx,12]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$notes
+               }
+                   if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$delta13c)) {
+    garba_mat[[idx,13]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$delta13c
+                   }
+                   if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$infinite)) {
+    garba_mat[[idx,14]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$infinite
+                   }
+                   if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronid)) {
+    garba_mat[[idx,15]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronid
+                   }
+                       if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochrontype)) {
+    garba_mat[[idx,16]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochrontype
+                       }
+                       if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronagetype)) {
+    garba_mat[[idx,17]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronagetype
+                       }
+                       if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$materialdated)) {
+    garba_mat[[idx,18]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$materialdated
+                       }
+                       if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$labnumberid)) {
+    garba_mat[[idx,19]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$labnumberid
+                       }
+                           if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronage$age)) {
+    garba_mat[[idx,20]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronage$age
+                           }
+                         if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronage$errorolder)) {
+    garba_mat[[idx,21]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronage$errorolder
+                         }
+                         if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronage$erroryounger)) {
+    garba_mat[[idx,22]] = garba_chrons[[i]]$chronology$controls[[j]]$geochron$geochronage$erroryounger
+                         }
+                             if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$relativeage$c14ages$c14ageolder)) {
+    garba_mat[[idx,23]] = garba_chrons[[i]]$chronology$controls[[j]]$relativeage$c14ages$c14ageolder
+                             }
+                                 if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$relativeage$c14ages$c14ageyounger)) {
+    garba_mat[[idx,24]] = garba_chrons[[i]]$chronology$controls[[j]]$relativeage$c14ages$c14ageyounger
+                                 }
+                                 if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$relativeage$calages$calageolder)) {
+    garba_mat[[idx,25]] = garba_chrons[[i]]$chronology$controls[[j]]$relativeage$calages$calageolder
+                                 }
+                                     if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$relativeage$calages$calageyounger)) {
+    garba_mat[[idx,26]] = garba_chrons[[i]]$chronology$controls[[j]]$relativeage$calages$calageyounger
+                                     }
+                                       if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$relativeage$relativeage)) {
+    garba_mat[[idx,27]] = garba_chrons[[i]]$chronology$controls[[j]]$relativeage$relativeage
+                                       }
+                                           if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$controllimits$ageolder)) {
+    garba_mat[[idx,28]] = garba_chrons[[i]]$chronology$controls[[j]]$controllimits$ageolder
+                                           }
+                                             if (!is.null(garba_chrons[[i]]$chronology$controls[[j]]$controllimits$ageyounger)) {
+    garba_mat[[idx,29]] = garba_chrons[[i]]$chronology$controls[[j]]$controllimits$ageyounger
+                                             }
+                                                 if (!is.null(garba_chrons[[i]]$chronology$reliableagespan$older)) {
+    garba_mat[[idx,30]] = garba_chrons[[i]]$chronology$reliableagespan$older
+                                                 }
+                                                     if (!is.null(garba_chrons[[i]]$chronology$reliableagespan$younger)) {
+    garba_mat[[idx,31]] = garba_chrons[[i]]$chronology$reliableagespan$younger
+  }
+}
+}
+
+garba_df = as.data.frame(garba_mat)
+
+names(garba_df) = c("agetype","default","age","depth","notes","controls_agetype","thickness","controltype","analysisunitid","chroncontrolid","analysisunitname","geochron_notes","delta13c","infinite","geochronid","geochrontype","geocrhonagetype","materialdated","labnumberid","geochronage_age","geochronage_errorolder","geochronage_erroryounger","c14age_ageolder","c14age_ageyounger","calage_ageolder","calage_ageyounger","relativeage","limits_older","limits_younger","reliable_older","reliable_younger")
+
+garba_df = garba_df %>% dplyr::mutate(age = as.numeric(age),geochronage_age = as.numeric(geochronage_age),geochronage_errorolder = as.numeric(geochronage_errorolder),geochronage_erroryounger = as.numeric(geochronage_erroryounger),limits_older = as.numeric(limits_older),limits_younger = as.numeric(limits_younger),reliable_older = as.numeric(reliable_older),reliable_younger = as.numeric(reliable_younger))
+
+chrons2 = content(GET("https://api.neotomadb.org/v2.0/apps/constdb/datasetages?dbid=2"))$data
+
+
+
+
+chrons_mat = matrix(nrow=length(chrons2),ncol=3)
+
+for (i in seq(length(chrons2))) {
+  for(j in seq(3) ) {
+    if (!is.null(chrons2[[i]][[j]])) {
+  chrons_mat[i,j] = chrons2[[i]][[j]]
+    }}}
+
+
+chrons_df = as.data.frame(chrons_mat) 
+
+
+names(chrons_df) = c("older","younger","agetype")
+
+chrons_df = chrons_df %>% dplyr::filter(!is.na(older)) %>% mutate(older = as.numeric(older),younger = as.numeric(younger))
+
+alapd_colls = collunits_df %>% dplyr::filter(siteid %in% db_sets$siteid)
+
+
+datatable(alapd_colls,rownames=FALSE)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
