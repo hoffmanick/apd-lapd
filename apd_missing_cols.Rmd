@@ -345,7 +345,7 @@ datatable(multipolys,rownames=FALSE)
 
 
 
-datatable(st_drop_geometry(multipoint_pubs[c('siteid','sitename','collectionunitid','collunitname','datasetid','citation')]))
+datatable(st_drop_geometry(multipoly_pubs[c('siteid','sitename','collectionunitid','collunitname','datasetid','citation')]))
 
 ```
 
