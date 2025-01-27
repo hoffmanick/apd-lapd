@@ -553,6 +553,36 @@ pubs_sources = alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% dplyr:
 
 
 alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% dplyr::filter(dbID ==2) %>% dplyr::filter(is.na(gpslatitude))  %>% left_join(datpub_df,by=join_by(datasetid)) %>% dplyr::select(publicationid,collectionunitid) %>% distinct() %>% group_by(publicationid) %>% count() %>% arrange(desc(n)) %>% left_join(pubs_sources) %>% datatable(rownames=FALSE)
+
+
+
+tables = c("dataprocessors")
+
+
+for (i in seq(length(tables))) {
+
+  table = tables[[i]]
+dslinks = content(GET(paste0("https://api.neotomadb.org/v2.0/data/dbtables?table=",table,"&limit=75000&offset=0")))$data
+
+
+dsl_df = matrix(nrow=length(dslinks),ncol=length(dslinks[[1]]))
+
+for (i in seq(1,length(dslinks))) {
+  for (j in seq(length(dslinks[[1]]))) {
+    if (!is.null(dslinks[[i]][[j]])) {
+      dsl_df[i,j] = dslinks[[i]][[j]]
+    }
+  }
+}
+
+dsl_df = as.data.frame(dsl_df)
+
+names(dsl_df) = names(dslinks[[1]]) 
+
+assign(paste0(table,"_df"), dsl_df)
+}
+
+
 ```
 
 <div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
