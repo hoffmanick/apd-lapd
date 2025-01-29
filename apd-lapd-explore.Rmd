@@ -63,11 +63,11 @@ table tr th :last-child, table tr td :last-child {
 ---
 
 ```{r, results='asis', echo = F}
-toc_depth <- rmarkdown::metadata$output$html_document$toc_depth
-sel <- paste0("h",(toc_depth+1):10, collapse = " > span, ")
-cat(paste0("<style>",
-           sel, 
-           " > .header-section-number { display: none; } </style>"))
+#toc_depth <- rmarkdown::metadata$output$html_document$toc_depth
+#sel <- paste0("h",(toc_depth+1):10, collapse = " > span, ")
+#cat(paste0("<style>",
+#           sel, 
+#           " > .header-section-number { display: none; } </style>"))
 ```
 
 ```{r setup,echo=FALSE,include=TRUE,message = FALSE, warning=FALSE}
@@ -540,12 +540,19 @@ datatable(no_loc,rownames=FALSE)
 
 ``` {r collectionunitsmissing, message=FALSE, echo=FALSE,warning=FALSE}
 
+bush2020 = read_xlsx("All_Appendices_R3_Simplified.xlsx",sheet=2) %>% dplyr::filter(`site name` %in% no_loc$sitename) %>% dplyr::select(`site name`,latitude,longitude)
+
+
+
+
 apdcolls_missingloc = alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% dplyr::filter(dbID ==2) %>% dplyr::filter(is.na(gpslatitude)) %>% dplyr::select(!c(datasettype,datasetid)) %>% distinct()
 
 
 datatable(apdcolls_missingloc,rownames=FALSE)
 
 apdcolls_missingloc %>% left_join(alapd_sites) %>% dplyr::select(c(sitename,siteid,latitudenorth,latitudesouth,longitudeeast,longitudewest)) %>% distinct() %>% datatable(rownames=FALSE)
+
+coll_pub_join =  alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% dplyr::filter(dbID ==2) %>% dplyr::filter(is.na(gpslatitude))  %>% left_join(datpub_df,by=join_by(datasetid))
 
  alapd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% dplyr::filter(dbID ==2) %>% dplyr::filter(is.na(gpslatitude))  %>% left_join(datpub_df,by=join_by(datasetid)) %>% dplyr::select(publicationid) %>% distinct() %>% left_join(pub_df, by=join_by(publicationid)) %>% datatable(rownames=FALSE)
  
