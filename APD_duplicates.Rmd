@@ -1,0 +1,207 @@
+---
+title: "Duplicated Sites in APD"
+author: "Nick Hoffman"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    highlight: pygment
+    keep_md: no
+    toc: true
+    number_sections: true
+    toc_depth: 1
+    toc_float: true
+    theme: journal
+editor_options:
+    chunk_output_type: inline
+---
+
+<style type="text/css">
+h2, h3, h4, h5, h6 {
+  counter-reset: section;
+}
+p {
+  font-size:18px;
+}
+
+ul {
+  font-size:18px;
+}
+
+li {
+  font-size:18px;
+}
+table {
+   padding: 0;border-collapse: collapse;
+   layout: fixed;
+   width: 90%; }
+table tr {
+   border-top: 1px solid #cccccc;
+   background-color: white;
+   margin: 0;
+   padding: 0; }
+table tr:nth-child(2n) {
+   background-color: #f8f8f8; }
+table tr th {
+   font-weight: bold;
+   border: 1px solid #cccccc;
+   margin: 0;
+   padding: 6px 13px; }
+table tr td {
+   border: 1px solid #cccccc;
+   margin: 0;
+   padding: 6px 13px; }
+table tr th :first-child, table tr td :first-child {
+   margin-top: 0; }
+table tr th :last-child, table tr td :last-child {
+   margin-bottom: 0; }
+.html-widget {
+    margin: auto;
+}
+</style>
+
+---
+```{r pressure, echo=FALSE, message=FALSE,warning=FALSE}
+
+
+library(httr)
+library(dplyr)
+library(DT)
+library(neotoma2)
+library(stringr)
+
+
+tables = c("dslinks","collectionunits","sites","datasets","publications", "datasetpublications","constituentdatabases","datasetdatabases","datasettypes")
+
+for (i in seq(length(tables))) {
+
+  table = tables[[i]]
+dslinks = content(GET(paste0("https://api.neotomadb.org/v2.0/data/dbtables?table=",table,"&limit=75000&offset=0")))$data
+
+
+
+if (table == "publications") {
+  dsl_df = matrix(nrow=length(dslinks),ncol=(length(dslinks[[1]]) - 2))
+  for (j in seq(1,length(dslinks))) {
+  for (k in seq((length(dslinks[[1]])) - 2)) {
+    if (!is.null(dslinks[[j]][[k]])) {
+      dsl_df[j,k] = dslinks[[j]][[k]]
+    }
+  }
+}
+}
+else {
+  dsl_df = matrix(nrow=length(dslinks),ncol=length(dslinks[[1]]))
+for (j in seq(1,length(dslinks))) {
+  for (k in seq(length(dslinks[[1]]))) {
+    if (!is.null(dslinks[[j]][[k]])) {
+      dsl_df[j,k] = dslinks[[j]][[k]]
+    }
+  }
+}
+}
+
+dsl_df = as.data.frame(dsl_df)
+
+if (table =="publications") {
+names(dsl_df) = names(dslinks[[1]])[1:(length(dslinks[[1]])-2)]  }
+
+else {
+  names(dsl_df) = names(dslinks[[1]])  
+}
+
+assign(paste0(table,"_df"), dsl_df)
+}
+
+
+dslinks_df$datasetid = as.character(dslinks_df$datasetid)
+
+dslinks_df$collectionunitid = as.character(dslinks_df$collectionunitid)
+
+dega_sites = sites_df %>% dplyr::filter(str_detect(sitename,"Dega"))
+
+dega_links = dslinks_df %>% dplyr::filter(siteid %in% dega_sites$siteid) %>% dplyr::left_join(datasets_df,by=join_by(datasetid,collectionunitid)) %>% left_join(collectionunits_df,by=join_by(collectionunitid)) %>% left_join(datasettypes_df,by=join_by(datasettypeid))
+
+```
+
+# Dega Sala Swamp
+
+There are two sites with the same name both called Dega Sala Swamp. They have the same sites metadata. The second was made a few minutes after the first.
+
+## Site Metadata
+
+``` {r degala, echo=FALSE, message=FALSE,warning=FALSE}
+
+datatable(dega_sites,rownames=FALSE)
+```
+
+## Dataset/Collection Metadata
+
+``` {r degana, echo=FALSE, message=FALSE,warning=FALSE}
+
+datatable(dega_links[c('datasetid','datasettype','siteid.x','collectionunitid','datasetname','collunitname','colldate')],rownames=FALSE)
+```
+
+## Sample Information
+
+```{r degasam, echo=FALSE, message=FALSE,warning=FALSE}
+samps_deg = samples(get_downloads(get_datasets(c(52725,52726,52727)))) 
+
+
+samps_deg %>% group_by(siteid,collunitid,datasetid) %>% count() %>% datatable(rownames=FALSE)
+
+datatable(samps_deg, rownames=FALSE)
+
+samps_deg %>% dplyr::filter(datasetid==52726) %>% print()
+
+samps_deg %>% dplyr::filter(datasetid==52725) %>% print()
+```
+
+Because only one siteid really has pollen data associated with it, and the other has just a geochronologic dataset, I think that other one should be deleted. That other one was the first of the two sites to be created. There was probably a Tilia error here.
+
+# Gutter / Blydefontein
+
+There are two sites with different names called Gutter and Blydefontein Stream Mouth 97. They have different site descriptions. One was made in December 2021, and the other in May 2022.
+
+```{r gutter, echo=FALSE, message=FALSE,warning=FALSE}
+
+
+gutter_sites = sites_df %>% dplyr::filter(str_detect(sitename,"Gutter") | str_detect(sitename,"Blydefontein"))
+
+gutter_links = dslinks_df %>% dplyr::filter(siteid %in% gutter_sites$siteid) %>% dplyr::left_join(datasets_df,by=join_by(datasetid,collectionunitid)) %>% left_join(collectionunits_df,by=join_by(collectionunitid)) %>% left_join(datasettypes_df,by=join_by(datasettypeid))
+```
+
+
+## Site Metadata
+
+``` {r degadeede, echo=FALSE, message=FALSE,warning=FALSE}
+
+datatable(gutter_sites,rownames=FALSE)
+```
+
+## Dataset/Collection Metadata
+
+All the collection unit names reference the same publication.
+
+``` {r degasheme, echo=FALSE, message=FALSE,warning=FALSE}
+
+datatable(gutter_links[c('datasetid','datasettype','siteid.x','collectionunitid','datasetname','collunitname','colldate')],rownames=FALSE)
+```
+
+## Publications
+
+The two publications linked are here.
+```{r degasamsisis, echo=FALSE, message=FALSE,warning=FALSE}
+
+datasetpublications_df %>% left_join(publications_df,by=join_by(publicationid)) %>% dplyr::filter(datasetid %in% gutter_links$datasetid) %>% select(citation,datasetid) %>% distinct() %>% group_by(citation) %>% summarize(toString(unique(datasetid))) %>% datatable(rownames=FALSE)
+
+```
+
+Scott 2005 has this to say: "The new data include results from swamp and pond sediments from the Base Section, Gutter Section, and BSM97 at Blydefontein Stream Mouth (Nyakale, 1999), and cave deposits from the Blydefontein Shelter (Fig. 1b)." To me, that suggests that the site name should be Blydefontein Stream Mouth, and BSM97 abd Gutter should be component collection units of that site.
+```{r differthi}
+
+
+```
+
+
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>

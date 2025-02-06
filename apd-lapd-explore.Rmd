@@ -80,6 +80,7 @@ library(httr)
 library(ggplot2)
 library(lubridate)
 library(dplyr)
+library(readxl)
 ```
 
 
@@ -535,6 +536,10 @@ no_loc = alapd_sites %>% dplyr::filter(is.na(longitudeeast))
 
 datatable(no_loc,rownames=FALSE)
 
+
+newnas = no_loc %>% dplyr::filter(is.na(sitedescription))
+
+datatable(newnas,rownames=FALSE)
 ```
 
 
