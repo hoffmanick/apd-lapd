@@ -384,14 +384,13 @@ vanker_data = get_downloads(ds,all_data=TRUE) %>% samples()
 
 counts = vanker_data %>% group_by(datasetid,datasettype) %>% count()
 
-vanker_data %>% group_by(datasetid,datasettype) %>% summarize(toString(unique(variablename))) %>% left_join(counts) %>% datatable(rownames=FALSE)
-
+varicount = vanker_data %>% group_by(datasetid,datasettype) %>% summarize(toString(unique(variablename))) %>% left_join(counts)
 
 
 vanker_data %>% dplyr::filter(datasetid %in% c("46706","48865","48868","48874"))
 
 who =vanker %>% dplyr::mutate(date = as.Date(recdatecreated.x)) %>% select(datasetid,contactname,date)
 
-vanker_data %>% group_by(datasetid) %>% summarize(datasettype) %>% distinct() %>% left_join(who) %>% datatable(rownames=FALSE)
+vanker_data %>% group_by(datasetid) %>% summarize(datasettype) %>% distinct() %>% left_join(who) %>% left_join(varicount) %>% datatable(rownames=FALSE)
  ```
 <div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
