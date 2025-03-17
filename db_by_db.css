@@ -1,0 +1,116 @@
+
+<style type="text/css">
+details {
+  display: block;
+}
+
+div {
+  display: block;
+}
+h2, h3, h4, h5, h6 {
+  counter-reset: section;
+}
+p {
+  font-size:18px;
+}
+
+ul {
+  font-size:18px;
+}
+
+li {
+  font-size:18px;
+}
+table {
+   padding: 0;border-collapse: collapse;
+   layout: fixed;
+   width: 90%; }
+table tr {
+   border-top: 1px solid #cccccc;
+   background-color: white;
+   margin: 0;
+   padding: 0; }
+table tr:nth-child(2n) {
+   background-color: #f8f8f8; }
+table tr th {
+   font-weight: bold;
+   border: 1px solid #cccccc;
+   margin: 0;
+   padding: 6px 13px; }
+table tr td {
+   border: 1px solid #cccccc;
+   margin: 0;
+   padding: 6px 13px; }
+table tr th :first-child, table tr td :first-child {
+   margin-top: 0; }
+table tr th :last-child, table tr td :last-child {
+   margin-bottom: 0; }
+.html-widget {
+    margin: auto;
+}
+
+.container-fluid.main-container{
+max-width: 85%
+}
+.tabset{
+    display: grid;
+    grid-template-columns: 1fr 30fr 100fr;
+
+}
+
+.nav.nav-pills {
+   display: flex;
+   flex-wrap:wrap;
+   justify-content: center;
+   justify-items: center;
+   align-items:center;
+   align-content:flex-start;
+}
+.nav.nav-pills li{
+    width: 100%;
+}
+.tab-content{
+    flex: 85%;
+    width: 100%
+}
+
+.nav.nav-pills .nav-item {
+    flex: none; /* Prevents flexbox from resizing the nav items */
+}
+
+.nav.nav-pills li {
+  border: 1px solid black;
+  border-radius: 20px;
+  margin-top: 20px;
+}
+
+.nav.nav-pills li:active {
+  border: 1px solid black;
+  border-radius: 20px;
+  margin-top: 20px;
+}
+
+.nav.nav-pills li:hover {
+  border: 1px solid black;
+  border-radius: 20px;
+  margin-top: 20px;
+}
+
+.nav-pills li.active a {
+  border-radius:20px;
+}
+
+.nav-pills li:hover a {
+  border-radius:20px;
+}
+.nav-pills li:focus a {
+  border-radius:20px;
+}
+
+.tab-content {
+  margin-left: 5%;
+  width: 95%;
+}
+
+
+</style>

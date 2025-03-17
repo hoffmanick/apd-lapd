@@ -1,0 +1,256 @@
+---
+title: "Misplaced Sites in Africa"
+author: "Nick Hoffman"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+  df_print: paged
+css: db_by_db.css
+toc: true
+number_sections: true
+toc_depth: 1
+toc_float: true
+theme: journal
+---
+  
+``` {r libs, message=FALSE,warning=FALSE,echo=FALSE}
+
+ library(pacman)
+p_load(neotoma2,tidyverse,DT,geojsonsf,sf,leaflet,httr,tmap,rosm,osmdata)
+
+```
+
+# scope of places searched
+
+```{r sites, message=FALSE,warning=FALSE,echo=FALSE}
+
+
+lats = c(38, 38, -40, -40)
+lons = c(-25, 62, 62, -25) # Reordered for a rectangle
+
+# Create a data frame with coordinates
+coordinates = data.frame(lat = lats, lon = lons)
+
+# Convert to sf object and create a polygon
+coordinates_sf = coordinates %>%
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) %>%
+  summarise(geometry = st_combine(geometry)) %>%
+  st_cast("POLYGON")
+
+# Plot to check
+tm_shape(osm.raster(coordinates_sf)) +
+  tm_rgb() +
+  tm_shape(coordinates_sf) +
+  tm_polygons(alpha = 0.5)
+
+coord_json = sf_geojson(coordinates_sf)
+
+sites = content(GET(paste0("https://api.neotomadb.org/v2.0/data/sites?&loc=",coord_json,"&limit=9999&offset=0")))$data
+
+
+idx = 0
+for (i in seq(length(sites))) {
+  for (j in seq(length(sites[[i]]$collectionunits))) {
+    for (k in seq(length(sites[[i]]$collectionunits[[j]]$datasets))) {
+    idx = idx + 1
+    }
+    }
+}
+
+
+sites_mat = matrix(nrow=idx,ncol=11)
+
+idx2 = 0
+for (i in seq(length(sites))) {
+  for (j in seq(length(sites[[i]]$collectionunits))) {
+    for (k in seq(length(sites[[i]]$collectionunits[[j]]$datasets))) {
+    idx2 = idx2 + 1
+    for (m in seq(5)) {
+      if (!is.null(sites[[i]][[m]])) {
+        sites_mat[[idx2, m]] = sites[[i]][[m]]
+      }
+    }
+    
+     if (!is.null(sites[[i]]$collectionunits[[j]]$handle)) {
+        sites_mat[[idx2,6]] = sites[[i]]$collectionunits[[j]]$handle
+     }
+       if (!is.null(sites[[i]]$collectionunits[[j]]$collectionunit)) {
+        sites_mat[[idx2,7]] = sites[[i]]$collectionunits[[j]]$collectionunit
+       }
+       if (!is.null(sites[[i]]$collectionunits[[j]]$collectionunitid)) {
+        sites_mat[[idx2,8]] = sites[[i]]$collectionunits[[j]]$collectionunitid
+       }
+       if (!is.null(sites[[i]]$collectionunits[[j]]$collectionunittype)) {
+        sites_mat[[idx2,9]] = sites[[i]]$collectionunits[[j]]$collectionunittype
+       }
+       if (!is.null(sites[[i]]$collectionunits[[j]]$dataset[[k]]$datasetid)) {
+        sites_mat[[idx2,10]] = sites[[i]]$collectionunits[[j]]$dataset[[k]]$datasetid
+       }
+       if (!is.null(sites[[i]]$collectionunits[[j]]$dataset[[k]]$datasettype)) {
+        sites_mat[[idx2,11]] = sites[[i]]$collectionunits[[j]]$dataset[[k]]$datasettype
+       }
+    }
+  }
+}
+
+sites_df = as.data.frame(sites_mat)
+
+names(sites_df) = c("siteid","sitename","sitedescription","geography","altitude","handle","collectionunit","collectionunitid","collectionunittype","datasetid","datasettype")
+```
+
+
+```{r tables, message=FALSE,warning=FALSE,echo=FALSE}
+
+
+
+tables = c("datasetdatabases","constituentdatabases")
+
+
+
+for (i in seq(length(tables))) {
+
+  table = tables[[i]]
+dslinks = content(GET(paste0("https://api.neotomadb.org/v2.0/data/dbtables?table=",table,"&limit=75000&offset=0")))$data
+
+
+
+if (table == "publications") {
+  dsl_df = matrix(nrow=length(dslinks),ncol=(length(dslinks[[1]]) - 2))
+  for (j in seq(1,length(dslinks))) {
+  for (k in seq((length(dslinks[[1]])) - 2)) {
+    if (!is.null(dslinks[[j]][[k]])) {
+      dsl_df[j,k] = dslinks[[j]][[k]]
+    }
+  }
+}
+}
+else {
+  dsl_df = matrix(nrow=length(dslinks),ncol=length(dslinks[[1]]))
+for (j in seq(1,length(dslinks))) {
+  for (k in seq(length(dslinks[[1]]))) {
+    if (!is.null(dslinks[[j]][[k]])) {
+      dsl_df[j,k] = dslinks[[j]][[k]]
+    }
+  }
+}
+}
+
+dsl_df = as.data.frame(dsl_df)
+
+if (table =="publications") {
+names(dsl_df) = names(dslinks[[1]])[1:(length(dslinks[[1]])-2)]  }
+
+else {
+  names(dsl_df) = names(dslinks[[1]])  
+}
+
+assign(paste0(table,"_df"), dsl_df)
+}
+```
+
+# sites and datasets found 
+```{r looksee, message=FALSE,warning=FALSE,echo=FALSE}
+
+not_apd = sites_df %>% left_join(datasetdatabases_df,by=join_by(datasetid)) %>% left_join(constituentdatabases_df, by=join_by(databaseid)) %>% dplyr::filter(databaseid != "2") %>% dplyr::filter(datasettype!="geochronologic") %>% group_by(siteid) %>% summarize(datasettype = toString(unique(datasettype)), databasename, geography) %>% dplyr::mutate(ds_db = paste0(databasename, ": ", datasettype)) %>% distinct()
+
+dbs = c('Alaskan Archaeofaunas','Alpine Palynological Database','European Pollen Database','FAUNMAP','Faunal Isotope Database','Neotoma','Neotoma Charcoal Data','Neotoma Testate Amoebae Database','Nonmarine Ostracod Distribution in Europe Database')
+
+colors=c("red","blue","orange","green","purple","black","yellow","gray","brown")
+
+colormapper= data.frame(databasename=dbs,colors=colors)
+
+not_apd = not_apd %>% left_join(colormapper)
+
+notapd_sfc = geojson_sf(not_apd$geography)
+
+notapd_sf = cbind(notapd_sfc,not_apd)
+
+pointSites = notapd_sf[st_geometry_type(notapd_sf) == "POINT",] %>% 
+  distinct(siteid, .keep_all = TRUE)
+polySites = notapd_sf[st_geometry_type(notapd_sf) == "POLYGON",] %>% 
+  distinct(siteid, .keep_all = TRUE)
+
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = polySites, 
+              color = "red", 
+              weight = 2, 
+              fillColor = ~colors, 
+              fillOpacity = 0.15, 
+              popup = ~ds_db)  %>%
+  addCircleMarkers(data = pointSites, 
+                   radius = 5, 
+                   color = "blue", 
+                   fillColor = ~colors, 
+                   fillOpacity = 0.7, 
+                   stroke = FALSE, 
+                   popup = ~ds_db)
+
+datatable(not_apd[c(1,2,3,4)],rownames=FALSE)
+
+
+not_apd %>% group_by(databasename) %>% count() %>% arrange(desc(n)) %>% datatable(rownames=FALSE)
+
+
+not_apd %>% group_by(datasettype) %>% count() %>% arrange(desc(n)) %>% datatable(rownames=FALSE)
+
+
+not_apd %>% group_by(databasename,datasettype) %>% count() %>% arrange(desc(n)) %>% datatable(rownames=FALSE)
+
+
+ones = not_apd %>% dplyr::filter(!(databasename %in% c("European Pollen Database","Nonmarine Ostracod Distribution in Europe Database","Neotoma Testate Amoebae Database","Faunal Isotope Database")) & !(datasettype =="specimen stable isotope, vertebrate fauna") )
+```
+
+# most likely to change
+
+I removed:
+
+* all EPD
+* all Nonmarine Ostracod Distribution in Europe
+* all Neotoma Testate Amoebae database
+* all Faunal Isotope DB
+* all specimen stable isotope
+* all vert fauna
+
+These are what remain, the ones that seem most potentially suspicious:
+
+```{r susses, message=FALSE,warning=FALSE,echo=FALSE}
+
+datatable(ones[c(1,2,3,4)], rownames=FALSE)
+
+
+ones %>% group_by(databasename) %>% count() %>% arrange(desc(n)) %>% datatable(rownames=FALSE)
+
+
+ones %>% group_by(datasettype) %>% count() %>% arrange(desc(n)) %>% datatable(rownames=FALSE)
+
+
+ones %>% group_by(databasename,datasettype) %>% count() %>% arrange(desc(n)) %>% datatable(rownames=FALSE)
+
+
+
+ones_sfc = geojson_sf(ones$geography)
+
+ones_sf = cbind(ones_sfc,ones)
+
+pointSites = ones_sf[st_geometry_type(ones_sf) == "POINT",] %>% 
+  distinct(siteid, .keep_all = TRUE)
+polySites = ones_sf[st_geometry_type(ones_sf) == "POLYGON",] %>% 
+  distinct(siteid, .keep_all = TRUE)
+
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = polySites, 
+              color = "red", 
+              weight = 2, 
+              fillColor = ~colors, 
+              fillOpacity = 0.15, 
+              popup = ~ds_db)  %>%
+  addCircleMarkers(data = pointSites, 
+                   radius = 5, 
+                   color = "blue", 
+                   fillColor = ~colors, 
+                   fillOpacity = 0.7, 
+                   stroke = FALSE, 
+                   popup = ~ds_db)
+```

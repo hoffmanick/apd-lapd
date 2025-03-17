@@ -87,8 +87,6 @@ library(DT)
 
 tables = c("collectionunits","sites","datasets","publications", "datasetpublications","constituentdatabases","datasetdatabases")
 
-
-
 for (i in seq(length(tables))) {
 
   table = tables[[i]]
@@ -194,6 +192,10 @@ site_coll_singlepoints = site_coll_count %>% dplyr::filter(n ==1 & st_geometry_t
 
 singlepoints = apd_sites_sf %>% dplyr::filter(siteid %in% c(site_coll_singlepoints$siteid)) %>% left_join(apd_colls, by=join_by(siteid)) %>% dplyr::filter(is.na(gpslongitude) & is.na(gpslatitude))
 
+
+singlepoint_pubs = singlepoints %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
+
+distinct_spntp = singlepoint_pubs %>% distinct(publicationid)
 
 ```
 
