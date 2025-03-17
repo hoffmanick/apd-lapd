@@ -79,13 +79,16 @@ library(dplyr)
 library(httr)
 library(leaflet)
 library(DT)
+library(neotoma2)
+library(dplyr)
+library(lubridate)
 ```
 
 
 ```{r downloadtabs, echo=FALSE,warning=FALSE,message=FALSE}
 
 
-tables = c("collectionunits","sites","datasets","publications", "datasetpublications","constituentdatabases","datasetdatabases")
+tables = c("dslinks","collectionunits","sites","datasets","publications", "datasetpublications","constituentdatabases","datasetdatabases","dataprocessors","contacts")
 
 for (i in seq(length(tables))) {
 
@@ -126,7 +129,6 @@ else {
 
 assign(paste0(table,"_df"), dsl_df)
 }
-
 
 
 
@@ -190,8 +192,15 @@ site_coll_count = apd_sites_sf %>% left_join(collectionunits_df, by=join_by(site
 
 site_coll_singlepoints = site_coll_count %>% dplyr::filter(n ==1 & st_geometry_type(geom) == "POINT")
 
-singlepoints = apd_sites_sf %>% dplyr::filter(siteid %in% c(site_coll_singlepoints$siteid)) %>% left_join(apd_colls, by=join_by(siteid)) %>% dplyr::filter(is.na(gpslongitude) & is.na(gpslatitude))
+singlepoints = apd_sites_sf %>% dplyr::filter(siteid %in% c(site_coll_singlepoints$siteid)) %>% left_join(apd_colls, by=join_by(siteid)) %>% dplyr::filter(is.na(gpslongitude) & is.na(gpslatitude)) %>% dplyr::mutate(siteid=as.numeric(siteid))
 
+clip_spt = singlepoints %>% arrange(desc(siteid)) 
+
+
+
+spt_pubs = singlepoints %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
+
+writeClipboard(paste(clip_spt$geom, collapse = "\n"))
 
 singlepoint_pubs = singlepoints %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
 
@@ -232,6 +241,16 @@ singlepolys = apd_sites_sf %>% dplyr::filter(siteid %in% c(site_coll_singlepoly$
 singpol_pubs = singlepolys %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
 
 distinct_spolp = singpol_pubs %>% distinct(publicationid)
+
+
+
+clip_spolt = singlepolys %>% arrange(desc(siteid)) 
+
+
+
+spol_pubs = singlepolys %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
+
+writeClipboard(paste(clip_spolt$siteid, collapse = "\n"))
 
 
 ```
@@ -351,6 +370,29 @@ datatable(st_drop_geometry(multipoly_pubs[c('siteid','sitename','collectionuniti
 
 ```
 
+48868 is an NA microcharcoal
+48865 and 48874 are duplicate microcharcoal
+48866 is NA pollen
+
+```{r vankervels}
+
+dslinks_df=dslinks_df %>% dplyr::mutate(datasetid = as.character(datasetid),collectionunitid = as.character(collectionunitid))
+vanker =dslinks_df %>% dplyr::filter(siteid=="26668") %>% dplyr::left_join(datasets_df) %>% dplyr::left_join(collectionunits_df,by=join_by(collectionunitid)) %>% left_join(dataprocessors_df,by=join_by(datasetid)) %>% left_join(contacts_df,by=join_by(contactid))
+
+ds = get_datasets(c(as.numeric(vanker$datasetid)),all_data=TRUE)
+
+vanker_data = get_downloads(ds,all_data=TRUE) %>% samples()
 
 
+counts = vanker_data %>% group_by(datasetid,datasettype) %>% count()
+
+varicount = vanker_data %>% group_by(datasetid,datasettype) %>% summarize(toString(unique(variablename))) %>% left_join(counts)
+
+
+vanker_data %>% dplyr::filter(datasetid %in% c("46706","48865","48868","48874"))
+
+who =vanker %>% dplyr::mutate(date = as.Date(recdatecreated.x)) %>% select(datasetid,contactname,date)
+
+vanker_data %>% group_by(datasetid) %>% summarize(datasettype) %>% distinct() %>% left_join(who) %>% left_join(varicount) %>% datatable(rownames=FALSE)
+ ```
 <div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
