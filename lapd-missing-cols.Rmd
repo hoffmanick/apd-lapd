@@ -1,0 +1,363 @@
+---
+title: "LAPD collection units missing coordinates"
+author: "Nick Hoffman"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    highlight: pygment
+    keep_md: no
+    toc: true
+    number_sections: true
+    toc_depth: 1
+    toc_float: true
+    theme: journal
+editor_options:
+  chunk_output_type: inline
+---
+  
+  <style type="text/css">
+  h2, h3, h4, h5, h6 {
+    counter-reset: section;
+  }
+p {
+  font-size:18px;
+}
+
+ul {
+  font-size:18px;
+}
+
+li {
+  font-size:18px;
+}
+table {
+  padding: 0;border-collapse: collapse;
+  layout: fixed;
+  width: 90%; }
+table tr {
+  border-top: 1px solid #cccccc;
+  background-color: white;
+  margin: 0;
+  padding: 0; }
+table tr:nth-child(2n) {
+  background-color: #f8f8f8; }
+    table tr th {
+      font-weight: bold;
+      border: 1px solid #cccccc;
+      margin: 0;
+      padding: 6px 13px; }
+  table tr td {
+    border: 1px solid #cccccc;
+    margin: 0;
+    padding: 6px 13px; }
+  table tr th :first-child, table tr td :first-child {
+    margin-top: 0; }
+  table tr th :last-child, table tr td :last-child {
+    margin-bottom: 0; }
+  .html-widget {
+    margin: auto;
+  }
+  </style>
+
+  
+```{r libs, echo=FALSE,warning=FALSE,message=FALSE}
+  
+  library(wkb)
+  library(sf)
+  library(dplyr)
+  library(httr)
+  library(leaflet)
+  library(DT)
+  library(neotoma2)
+  library(dplyr)
+  library(lubridate)
+```
+  
+  
+```{r downloadtabs, echo=FALSE,warning=FALSE,message=FALSE}
+  
+  
+  tables = c("dslinks","collectionunits","sites","datasets","publications", "datasetpublications","constituentdatabases","datasetdatabases","dataprocessors","contacts")
+  
+  for (i in seq(length(tables))) {
+    
+    table = tables[[i]]
+    dslinks = content(GET(paste0("https://api.neotomadb.org/v2.0/data/dbtables?table=",table,"&limit=75000&offset=0")))$data
+    
+    
+    
+    if (table == "publications") {
+      dsl_df = matrix(nrow=length(dslinks),ncol=(length(dslinks[[1]]) - 2))
+      for (j in seq(1,length(dslinks))) {
+        for (k in seq((length(dslinks[[1]])) - 2)) {
+          if (!is.null(dslinks[[j]][[k]])) {
+            dsl_df[j,k] = dslinks[[j]][[k]]
+          }
+        }
+      }
+    }
+    else {
+      dsl_df = matrix(nrow=length(dslinks),ncol=length(dslinks[[1]]))
+      for (j in seq(1,length(dslinks))) {
+        for (k in seq(length(dslinks[[1]]))) {
+          if (!is.null(dslinks[[j]][[k]])) {
+            dsl_df[j,k] = dslinks[[j]][[k]]
+          }
+        }
+      }
+    }
+    
+    dsl_df = as.data.frame(dsl_df)
+    
+    if (table =="publications") {
+      names(dsl_df) = names(dslinks[[1]])[1:(length(dslinks[[1]])-2)]  }
+    
+    else {
+      names(dsl_df) = names(dslinks[[1]])  
+    }
+    
+    assign(paste0(table,"_df"), dsl_df)
+  }
+  
+  
+  
+  
+```
+  
+```{r dbsets, echo=FALSE,warning=FALSE,message=FALSE}
+  
+  db_sets = as.data.frame(matrix(nrow=0,ncol=7))
+  names(db_sets) =c("lon","lat","siteid","sitename","datasetid","datasettype","dbID")
+  for (i in c(5)) {
+    db = content(GET(paste0("https://api.neotomadb.org/v2.0/apps/constdb/datasets?dbid=",i)))$data
+    #print(paste("DB ID:",i))
+    db_mat = matrix(nrow=length(db),ncol=7)
+    for (m in seq(length(db))) {
+      if(!is.null(db[[m]]$coords[[1]])) {
+        db_mat[[m,1]] = db[[m]]$coords[[1]]}
+      if(!is.null(db[[m]]$coords[[2]])) {
+        db_mat[[m,2]] = db[[m]]$coords[[2]]}
+      if(!is.null(db[[m]]$siteid)) {
+        db_mat[[m,3]] = db[[m]]$siteid}
+      if(!is.null(db[[m]]$sitename)) {
+        db_mat[[m,4]] = db[[m]]$sitename}
+      if(!is.null(db[[m]]$datasetid)) {
+        db_mat[[m,5]] = db[[m]]$datasetid
+      }
+      if(!is.null(db[[m]]$datasettype)) {
+        db_mat[[m,6]] = db[[m]]$datasettype
+      }
+      db_mat[[m,7]] = i
+    }
+    db_df = as.data.frame(db_mat)
+    names(db_df) = c("lon","lat","siteid","sitename","datasetid","datasettype","dbID")
+    db_sets = rbind(db_sets,db_df)
+    
+  }
+```
+  
+# Groups of Missing Collection Unit Coords
+  
+## Point Site, Single Collection Unit associated
+  
+  
+```{r coll, echo=FALSE,warning=FALSE,message=FALSE}
+  
+  
+  apd_colls = collectionunits_df %>% dplyr::filter(siteid %in% db_sets$siteid)
+  
+  apdcolls_missingloc = apd_colls %>% left_join(db_sets, by=join_by(siteid)) %>% dplyr::filter(dbID ==2) %>% dplyr::filter(is.na(gpslatitude)) %>% dplyr::select(!c(datasettype,datasetid)) %>% distinct()
+  
+  
+  #datatable(apdcolls_missingloc,rownames=FALSE)
+  
+  apd_sites = sites_df %>% dplyr::filter(siteid %in% db_sets$siteid) %>% dplyr::filter(!is.na(geog))
+  
+  
+  apd_sfc = st_as_sfc(hex2raw(apd_sites$geog),EWKB=TRUE)
+  apd_sites_sf = st_as_sf(apd_sites,geom=apd_sfc) %>% dplyr::select(!geog)
+  
+  site_coll_count = apd_sites_sf %>% left_join(collectionunits_df, by=join_by(siteid)) %>% dplyr::filter(!is.na(collectionunitid)) %>% group_by(siteid) %>% count()
+  
+  site_coll_singlepoints = site_coll_count %>% dplyr::filter(n ==1 & st_geometry_type(geom) == "POINT")
+  
+  singlepoints = apd_sites_sf %>% dplyr::filter(siteid %in% c(site_coll_singlepoints$siteid)) %>% left_join(apd_colls, by=join_by(siteid)) %>% dplyr::filter(is.na(gpslongitude) & is.na(gpslatitude)) %>% dplyr::mutate(siteid=as.numeric(siteid))
+  
+  clip_spt = singlepoints %>% arrange(desc(siteid)) 
+  
+  
+  
+  spt_pubs = singlepoints %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
+  
+  writeClipboard(paste(clip_spt$geom, collapse = "\n"))
+  
+  singlepoint_pubs = singlepoints %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
+  
+  distinct_spntp = singlepoint_pubs %>% distinct(publicationid)
+  
+```
+  
+There are `r length(singlepoints[[1]])` collection units that are uniquely associated with a site, and the site has a point geometry. (That is, the point site has just one collection unit.) For these `r length(singlepoints[[1]])` collection units, it seems reasonable to assume that the collection unit's coordinates should be the same as the site's coordinates. 
+  
+```{r datatablesingpoint3, echo=FALSE,warning=FALSE,message=FALSE}
+  datatable(singlepoints,rownames=FALSE)
+  
+  
+  leaflet() %>%
+    addTiles() %>%
+    addCircleMarkers(data = singlepoints, 
+                     radius = 5, 
+                     color = "blue", 
+                     fillColor = "blue", 
+                     fillOpacity = 0.2, 
+                     stroke = FALSE, 
+                     popup = ~sitename)
+  
+  
+```
+  
+## Polygon Site, Single Collection Unit Associated
+  
+```{r polysingle, echo=FALSE,warning=FALSE,message=FALSE}
+  
+  
+  site_coll_singlepoly = site_coll_count %>% dplyr::filter(n ==1 & st_geometry_type(geom) == "POLYGON")
+  
+  singlepolys = apd_sites_sf %>% dplyr::filter(siteid %in% c(site_coll_singlepoly$siteid)) %>% left_join(apd_colls, by=join_by(siteid)) %>% dplyr::filter(is.na(gpslongitude) & is.na(gpslatitude))
+  
+  
+  
+  singpol_pubs = singlepolys %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
+  
+  distinct_spolp = singpol_pubs %>% distinct(publicationid)
+  
+  
+  
+  clip_spolt = singlepolys %>% arrange(desc(siteid)) 
+  
+  
+  
+  spol_pubs = singlepolys %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
+  
+  writeClipboard(paste(clip_spolt$siteid, collapse = "\n"))
+  
+  
+```
+  
+There are `r length(singlepolys[[1]])` collection units that are uniquely associated with a site, and the site has a polygon geometry. (That is, the polygon site has just one collection unit.) For these `r length(singlepolys[[1]])` collection units, I should investigate the `r length(distinct_spolp[[1]])` associated papers and see if there are more precise coordinates associated with these.
+  
+```{r datatablesingpoly4, echo=FALSE,warning=FALSE,message=FALSE}
+  datatable(singlepolys,rownames=FALSE)
+  
+  
+  leaflet() %>%
+    addTiles() %>%
+    addPolygons(data = singlepolys, 
+                color = "red", 
+                weight = 8, 
+                fillColor = "orange", 
+                fillOpacity = 0.35, 
+                popup = ~sitename)  
+  
+  
+  
+  datatable(st_drop_geometry(singpol_pubs[c('siteid','sitename','collectionunitid','collunitname','datasetid','citation')]))
+
+```
+  
+## Point site, multiple collection units associated
+  
+  
+  
+```{r coll22, echo=FALSE,warning=FALSE,message=FALSE}
+  
+  
+  site_coll_multipoints = site_coll_count %>% dplyr::filter(n >1 & st_geometry_type(geom) == "POINT")
+  
+  multipoints = apd_sites_sf %>% dplyr::filter(siteid %in% c(site_coll_multipoints$siteid)) %>% left_join(apd_colls, by=join_by(siteid)) %>% dplyr::filter(is.na(gpslongitude) & is.na(gpslatitude)) 
+  
+  ##%>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetdatabases_df, by=join_by(datasetid)) %>% left_join(constituentdatabases_df, by=join_by(databaseid))
+  
+  multipoint_sites = multipoints %>% distinct(siteid)
+  
+  
+  
+  
+  multipoint_pubs = multipoints %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
+  
+  distinct_mpntp = multipoint_pubs %>% distinct(publicationid)
+  
+```
+  
+  
+  
+There are `r length(multipoints[[1]])` collection units that are jointly associated with a site (n = `r length(multipoint_sites[[1]])`), and the site has a point geometry. (That is, the point site has multiple collection units.) For these `r length(multipoints[[1]])` collection units, I should investigate the associated `r length(distinct_mpntp[[1]])` papers and see if there are more precise coordinates associated with these. But I'm wondering if there's a kind of logical problem with having multiple collectionunits associated with a point site: in a way, doesn't that require that all the collectionunits have the same location (i.e., the location of the single site point)?
+
+```{r datatablesingpoly1, echo=FALSE,warning=FALSE,message=FALSE}
+datatable(multipoints,rownames=FALSE)
+
+
+    leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(data = multipoints, 
+              color = "blue", 
+              radius = 5, 
+              fillColor = "blue", 
+              fillOpacity = 0.35, 
+              popup = ~sitename)  
+
+
+datatable(st_drop_geometry(multipoint_pubs[c('siteid','sitename','collectionunitid','collunitname','datasetid','citation')]))
+
+```
+
+
+## Poly site, multiple collection units associated
+
+
+
+
+```{r coll21, echo=FALSE,warning=FALSE,message=FALSE}
+
+
+site_coll_multipolys = site_coll_count %>% dplyr::filter(n >1 & st_geometry_type(geom) == "POLYGON")
+
+multipolys = apd_sites_sf %>% dplyr::filter(siteid %in% c(site_coll_multipolys$siteid)) %>% left_join(apd_colls, by=join_by(siteid)) %>% dplyr::filter(is.na(gpslongitude) & is.na(gpslatitude)) 
+
+##%>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetdatabases_df, by=join_by(datasetid)) %>% left_join(constituentdatabases_df, by=join_by(databaseid))
+
+multipoly_sites = multipolys %>% distinct(siteid)
+
+
+multipoly_pubs = multipolys %>% left_join(datasets_df, by=join_by(collectionunitid)) %>% left_join(datasetpublications_df, by=join_by(datasetid)) %>% left_join(publications_df,by=join_by(publicationid))
+
+distinct_mpp = multipoly_pubs %>% distinct(publicationid)
+
+```
+
+
+
+There are `r length(multipolys[[1]])` collection units that are jointly associated with a site (n = `r length(multipoly_sites[[1]])`), and the site has a polygon geometry. (That is, the polygon site has multiple collection units.) For these `r length(multipolys[[1]])` collection units, I should investigate the associated `r length(distinct_mpp[[1]])`` papers and see if there are more precise coordinates associated with these.
+
+```{r datatablesingpoly2, echo=FALSE,warning=FALSE,message=FALSE}
+datatable(multipolys,rownames=FALSE)
+
+
+    leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = multipolys, 
+              color = "red", 
+              weight = 8, 
+              fillColor = "orange", 
+              fillOpacity = 0.35, 
+              popup = ~sitename)  
+
+
+
+
+datatable(st_drop_geometry(multipoly_pubs[c('siteid','sitename','collectionunitid','collunitname','datasetid','citation')]))
+
+```
+
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>
